@@ -1,2 +1,5 @@
 selenium==4.9.1
 beautifulsoup4==4.12.2
+pymongo==4.3.3
+pydantic[dotenv]==1.10.8
+tqdm==4.65.0
