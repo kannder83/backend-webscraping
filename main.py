@@ -227,30 +227,33 @@ def advance_search():
     # Intentos y contador
     max_retries = 3
     retries = 0
-    wait_time = 3  # Tiempo de espera entre reintentos
+    wait_time = 5  # Tiempo de espera entre reintentos
 
     while retries < max_retries:
         user_agent = random.choice(user_agents)
         try:
             chrome_options = Options()
+            chrome_options.binary_location = '/usr/bin/chromium-browser'
             chrome_options.add_argument(f'user-agent={user_agent}')
             chrome_options.add_argument('--headless')
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--disable-dev-shm-usage')
-            # chrome_options.add_argument("--disable-infobars")
-            # chrome_options.add_argument("--disable-notifications")
-            # chrome_options.add_argument("--disable-extensions")
-            # chrome_options.add_argument("--disable-gpu")
-            # chrome_options.add_argument("--disable-browser-side-navigation")
-            # chrome_options.add_argument("--disable-software-rasterizer")
-            # chrome_options.add_argument("--disable-webgl")
-            # chrome_options.add_argument("--disable-xss-auditor")
-            # chrome_options.add_argument("--disable-web-security")
-            # chrome_options.add_argument("--disable-popup-blocking")
-            # chrome_options.add_argument("--dns-prefetch-disable")
-            # chrome_options.add_argument("--enable-automation")
+            chrome_options.add_argument("--disable-infobars")
+            chrome_options.add_argument("--disable-notifications")
+            chrome_options.add_argument("--disable-extensions")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--disable-browser-side-navigation")
+            chrome_options.add_argument("--disable-software-rasterizer")
+            chrome_options.add_argument("--disable-webgl")
+            chrome_options.add_argument("--disable-xss-auditor")
+            chrome_options.add_argument("--disable-web-security")
+            chrome_options.add_argument("--disable-popup-blocking")
+            chrome_options.add_argument("--dns-prefetch-disable")
+            chrome_options.add_argument("--enable-automation")
 
             driver = webdriver.Chrome(options=chrome_options)
+
+            driver.implicitly_wait(wait_time)
 
             driver.get(
                 "https://procesosjudiciales.funcionjudicial.gob.ec/expel-busqueda-avanzada")
