@@ -3,3 +3,4 @@ beautifulsoup4==4.12.2
 pymongo==4.3.3
 pydantic[dotenv]==1.10.8
 tqdm==4.65.0
+webdriver-manager==3.8.6

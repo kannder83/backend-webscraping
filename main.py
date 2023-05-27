@@ -9,8 +9,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
+
 
 from config.database import db_client
 
@@ -26,26 +29,25 @@ def init_log():
 def data_submission(driver: webdriver, data: str):
     """
     """
-    time.sleep(0.4)
-    #  Busca el input para agregar los datos
-    input_element = driver.find_element(
-        By.CSS_SELECTOR, 'input[formcontrolname="cedulaActor"]')
+    input_element = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, 'input[formcontrolname="cedulaActor"]'))
+    )
 
     # Envia los datos
     input_element.send_keys(data)
 
     # Busca que el boton para realizar la busqueda
-    time.sleep(0.4)
-    button_element = driver.find_element(
-        By.CSS_SELECTOR, 'button.boton-buscar')
+    button_element = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, 'button.boton-buscar'))
+    )
     ActionChains(driver).move_to_element(button_element).click().perform()
-    time.sleep(0.4)
 
 
 def quantity_of_records(driver: webdriver):
     """
     """
-    time.sleep(0.3)
     # Espera que se cargue la página para obtener la cantidad de registros
     wait = WebDriverWait(driver, 10)
     cantidad_element = wait.until(EC.presence_of_element_located(
@@ -59,10 +61,10 @@ def quantity_of_records(driver: webdriver):
 def quantity_of_pages(driver: webdriver):
     """
     """
-    time.sleep(0.3)
-    # Encontrar el elemento div con la clase "mat-mdc-paginator-range-label"
-    div_element = driver.find_element(
-        'css selector', '.mat-mdc-paginator-range-label')
+    # Espera que se cargue el elemento div con la clase "mat-mdc-paginator-range-label"
+    wait = WebDriverWait(driver, 10)
+    div_element = wait.until(EC.presence_of_element_located(
+        (By.CSS_SELECTOR, '.mat-mdc-paginator-range-label')))
 
     # Obtener el texto del elemento
     texto = div_element.text
@@ -73,24 +75,13 @@ def quantity_of_pages(driver: webdriver):
     return int(cantidad_paginas)
 
 
-def detail_info(elemento):
+def detail_info_process(driver: webdriver):
     """
     """
-    # Encontrar el enlace dentro del elemento actual
-    enlace_detalle = elemento.find_element(By.TAG_NAME, "a")
-
-    # Hacer clic en el enlace
-    enlace_detalle.click()
-    time.sleep(0.9)
-
-
-def detail_info_process(html):
-    """
-    """
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
     diccionario = {}
     try:
-        time.sleep(0.6)
+        time.sleep(1)
 
         columnas = soup.select('.cabecera div')
         valores = soup.select(
@@ -112,7 +103,8 @@ def obtain_by_window(driver: webdriver):
     """
     """
     detalle = []
-    elementos = driver.find_elements(By.CLASS_NAME, "causa-individual")
+    elementos = WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.CLASS_NAME, "causa-individual")))
     ventana_principal = driver.current_window_handle
 
     for elemento in tqdm(elementos):
@@ -121,12 +113,12 @@ def obtain_by_window(driver: webdriver):
         acciones.move_to_element(enlace_detalle).key_down(
             Keys.COMMAND).click(enlace_detalle).perform()
 
-        time.sleep(0.6)
+        time.sleep(1)
         ventanas = driver.window_handles
-        time.sleep(0.6)
+        time.sleep(1)
         driver.switch_to.window(ventanas[-1])
-        time.sleep(0.6)
-        get_detail_info = detail_info_process(driver.page_source)
+        time.sleep(1)
+        get_detail_info = detail_info_process(driver)
 
         driver.close()
 
@@ -144,21 +136,18 @@ def next_page(driver: webdriver, quantity_of_pages: int):
     all_data = []
     for page_number in range(1, quantity_of_pages):
         logging.info(f"Página >>> {page_number} / {quantity_of_pages}")
-        time.sleep(0.6)
 
-        # Obtiene la información de la lista
+        # Esperar a que se cargue la información de la lista
         all_data.append(obtain_data_causa(driver))
 
-        # Encontrar el botón por clase CSS
-        time.sleep(0.6)
-        boton = driver.find_element(
-            By.CSS_SELECTOR, 'button.mat-mdc-paginator-navigation-next')
+        # Esperar a que el botón esté presente y sea clicleable
+        wait = WebDriverWait(driver, 10)
+        boton = wait.until(EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, 'button.mat-mdc-paginator-navigation-next')))
 
         # Hacer clic en el botón
-        time.sleep(0.6)
         boton.click()
 
-    time.sleep(0.9)
     logging.info(f"Página >>> {quantity_of_pages} / {quantity_of_pages}")
     all_data.append(obtain_data_causa(driver))
 
@@ -216,6 +205,7 @@ def obtain_data_causa(driver):
 def advance_search():
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.5672.126 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
@@ -233,25 +223,14 @@ def advance_search():
         user_agent = random.choice(user_agents)
         try:
             chrome_options = Options()
-            chrome_options.binary_location = '/usr/bin/chromium-browser'
             chrome_options.add_argument(f'user-agent={user_agent}')
-            chrome_options.add_argument('--headless')
+            chrome_options.add_argument("--disable-application-cache")
+            chrome_options.add_argument('--headless=new')
             chrome_options.add_argument('--no-sandbox')
             chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument("--disable-infobars")
-            chrome_options.add_argument("--disable-notifications")
-            chrome_options.add_argument("--disable-extensions")
-            chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument("--disable-browser-side-navigation")
-            chrome_options.add_argument("--disable-software-rasterizer")
-            chrome_options.add_argument("--disable-webgl")
-            chrome_options.add_argument("--disable-xss-auditor")
-            chrome_options.add_argument("--disable-web-security")
-            chrome_options.add_argument("--disable-popup-blocking")
-            chrome_options.add_argument("--dns-prefetch-disable")
-            chrome_options.add_argument("--enable-automation")
 
-            driver = webdriver.Chrome(options=chrome_options)
+            driver = webdriver.Chrome(service=Service(
+                ChromeDriverManager().install()), options=chrome_options)
 
             driver.implicitly_wait(wait_time)
 
@@ -285,7 +264,7 @@ def advance_search():
             with open("archivo.txt", 'w') as f:
                 json.dump(save_document, f)
 
-            time.sleep(0.6)
+            driver.implicitly_wait(1)
             driver.close()
             logging.info(f"Finaliza el proceso.")
             break
