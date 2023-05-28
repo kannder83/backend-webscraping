@@ -8,7 +8,10 @@ from app.web_scraping.controller import db_judicatura
 
 from app.pages_scraping.judicatura import Judicatura
 
-router = APIRouter()
+
+router: APIRouter = APIRouter(
+    tags=["WebScraping"]
+)
 
 
 def write_notification(value: str):
