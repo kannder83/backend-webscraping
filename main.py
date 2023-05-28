@@ -1,17 +1,29 @@
 import logging
-from app.webscraping.judicatura import Judicatura
-
-
-def init_log():
-    logging.basicConfig(
-        level=logging.INFO, format='%(levelname)s - %(asctime)s - %(filename)s:%(lineno)d - %(message)s')
+import uvicorn
+from subprocess import run
+from config.conf import settings
 
 
 def main():
-    init_log()
-    logging.info(f"starting!")
-    scraping_judicatura = Judicatura(values=["0968599020001"])
-    scraping_judicatura.search()
+    """
+    """
+    try:
+        if settings.debug:
+            uvicorn.run(
+                "config.app:application",
+                host="0.0.0.0",
+                port=8000,
+                reload=True,
+            )
+        else:
+            run(f"gunicorn config.app:application -w 4 -b 0.0.0.0:8000 --worker-class uvicorn.workers.UvicornWorker".split(' '))
+
+    except KeyboardInterrupt:
+        logging.warning("Se cierra aplicación.")
+        exit()
+
+    except Exception as error:
+        logging.error(error)
 
 
 if __name__ == "__main__":

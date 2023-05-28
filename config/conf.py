@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int
     debug: bool
+    dev_url: str
+    prod_url: str
+    allowed_hosts: list
 
     # DB configuration
     database_hostname: str
