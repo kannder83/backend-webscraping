@@ -235,8 +235,8 @@ class Judicatura():
         """
 
         save_document = {
-            "actor/ofendido": criteria,
-            "fecha_consulta": utils.date_now(),
+            "documento": criteria,
+            "fecha_creacion": utils.date_now(),
             "procesos": data
         }
 
