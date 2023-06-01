@@ -8,11 +8,7 @@ from config.conf import settings
 
 
 # Routes
-from app.web_scraping.routes import router as hello_router
-# from app.security.routes import router as security_router
-# from app.user.routes import router as user_router
-# from app.classroom.routes import router as classroom_router
-# from app.subject.routes import router as subject_router
+from app.web_scraping.routes import router as judicatura_router
 
 
 def get_application():
@@ -53,24 +49,21 @@ def get_application():
 
     @app.on_event("startup")
     def startup_event():
+        pass
 
-        if settings.debug:
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format="%(asctime)s %(levelname)s %(message)s"
-            )
-        else:
-            logging.basicConfig(
-                level=logging.WARNING,
-                format="%(asctime)s %(levelname)s %(message)s"
-            )
+        # if settings.debug:
+        #     logging.basicConfig(
+        #         level=logging.DEBUG,
+        #         format="%(asctime)s %(levelname)s %(message)s"
+        #     )
+        # else:
+        #     logging.basicConfig(
+        #         level=logging.WARNING,
+        #         format="%(asctime)s %(levelname)s %(message)s"
+        #     )
 
     # Routes to publish
-    app.include_router(hello_router)
-    # app.include_router(security_router)
-    # app.include_router(user_router)
-    # app.include_router(classroom_router)
-    # app.include_router(subject_router)
+    app.include_router(judicatura_router)
 
     return app
 

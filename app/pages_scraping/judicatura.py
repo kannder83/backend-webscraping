@@ -19,22 +19,22 @@ from app.utils.utils import utils
 from config.database import db_client
 
 
-def init_log():
-    logging.basicConfig(
-        level=logging.INFO, format='%(levelname)s - %(asctime)s - %(filename)s:%(lineno)d - %(message)s')
+# def init_log():
+#     logging.basicConfig(
+#         level=# logging.info, format='%(levelname)s - %(asctime)s - %(filename)s:%(lineno)d - %(message)s')
 
 
 class Judicatura():
     """
     """
 
-    def __init__(self, values: list):
+    def __init__(self, value: str):
         self.driver = None
         self.retries: int = 0  # Contador de intentos
         self.all_data: list = []
         self.wait_time: float = 5  # Tiempo de espera entre reintentos
         self.max_retries: int = 3  # Maximo de intentos de consulta
-        self.list_of_data: list = values
+        self.list_of_data: str = value
         self.URL: str = "https://procesosjudiciales.funcionjudicial.gob.ec/expel-busqueda-avanzada"
 
     def config_chrome(self):
@@ -46,6 +46,14 @@ class Judicatura():
         chrome_options.add_argument('--headless=new')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-plugins")
+        chrome_options.add_argument("--disable-popup-blocking")
+        chrome_options.add_argument("--disable-infobars")
+        chrome_options.add_argument("--disable-notifications")
+        chrome_options.add_argument("--disable-logging")
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--window-size=1280,720")
 
         return chrome_options
 
@@ -67,6 +75,7 @@ class Judicatura():
     def data_submission(self, data: str) -> None:
         """
         """
+        time.sleep(0.2)
         input_element = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, 'input[formcontrolname="cedulaActor"]'))
@@ -76,6 +85,7 @@ class Judicatura():
         input_element.send_keys(data)
 
         # Busca que el boton para realizar la busqueda
+        time.sleep(0.2)
         button_element = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, 'button.boton-buscar'))
@@ -88,6 +98,7 @@ class Judicatura():
         """
         # Espera que se cargue la página para obtener la cantidad de registros
         wait = WebDriverWait(self.driver, 10)
+        time.sleep(0.2)
         cantidad_element = wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, 'section.registros-encontrados p.cantidadMovimiento')))
         cantidad_registros = cantidad_element.text.strip()
@@ -100,6 +111,7 @@ class Judicatura():
         """
         # Espera que se cargue el elemento div con la clase "mat-mdc-paginator-range-label"
         wait = WebDriverWait(self.driver, 10)
+        time.sleep(0.2)
         div_element = wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, '.mat-mdc-paginator-range-label')))
 
@@ -115,20 +127,25 @@ class Judicatura():
         """
         """
         for page_number in range(1, quantity_of_pages):
-            logging.info(f"Página >>> {page_number} / {quantity_of_pages}")
+            print(f"Página >>> {page_number} / {quantity_of_pages}")
+            #  logging.info(f"Página >>> {page_number} / {quantity_of_pages}")
 
             # Esperar a que se cargue la información de la lista
+            time.sleep(0.2)
             self.all_data.append(self.obtain_data_causa())
 
             # Esperar a que el botón esté presente y sea clicleable
             wait = WebDriverWait(self.driver, 10)
+            time.sleep(0.2)
             boton = wait.until(EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, 'button.mat-mdc-paginator-navigation-next')))
 
             # Hacer clic en el botón
+            time.sleep(0.2)
             boton.click()
 
-        logging.info(f"Página >>> {quantity_of_pages} / {quantity_of_pages}")
+        #  logging.info(f"Página >>> {quantity_of_pages} / {quantity_of_pages}")
+        print(f"Página >>> {quantity_of_pages} / {quantity_of_pages}")
         self.all_data.append(self.obtain_data_causa())
 
     def obtain_data_causa(self) -> list:
@@ -181,6 +198,7 @@ class Judicatura():
         """
         """
         detalle = []
+        time.sleep(0.2)
         elementos = WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "causa-individual")))
         ventana_principal = self.driver.current_window_handle
@@ -228,7 +246,8 @@ class Judicatura():
 
             return diccionario
         except Exception as error:
-            logging.error(f"ERROR >>>> {error}")
+            print(error)
+            # logging.info(f"ERROR >>>> {error}")
 
     def store_data(self, data: dict, criteria: str):
         """
@@ -240,20 +259,28 @@ class Judicatura():
             "procesos": data
         }
 
-        with open("archivo.txt", 'w') as f:
-            json.dump(save_document, f)
+        try:
+            with open("archivo.txt", 'w') as f:
+                json.dump(save_document, f)
+            print("Se crear el archivo correctamente.")
+        except Exception as error:
+            print(f"Error: {error}")
 
-        logging.info(f"Conexion a la base de datos...")
-        collection = db_client.judicatura
-        result = collection.insert_one(save_document)
-        document_id = result.inserted_id
-        logging.info(
-            f"Se almacena información correctamente id: {document_id}.")
+        #  logging.info(f"Conexion a la base de datos...")
+        try:
+            print(f"Conexion a la base de datos...")
+            collection = db_client.judicatura
+            result = collection.insert_one(save_document)
+            document_id = result.inserted_id
+            #  logging.info(f"Se almacena información correctamente id: {document_id}.")
+            print(f"Se almacena información correctamente id: {document_id}.")
+        except Exception as error:
+            print(f"Error: {error}")
 
     def search(self):
         """
         """
-        init_log()
+        # init_log()
         while self.retries < self.max_retries:
             try:
                 self.driver = webdriver.Chrome(service=Service(
@@ -262,48 +289,55 @@ class Judicatura():
                 self.driver.get(self.URL)
 
                 # Se envia la inforamción
-                self.data_submission(self.list_of_data[0])
+                self.data_submission(self.list_of_data)
 
                 # Se obtiene la cantidad de registros
                 records = self.quantity_of_records()
-                logging.info(f"Cantidad de registros: {records}")
+                #  logging.info(f"Cantidad de registros: {records}")
+                print(f"Cantidad de registros: {records}")
 
                 # Se obtiene la cantidad de páginas
                 pages = self.quantity_of_pages()
-                logging.info(f"Cantidad de páginas: {pages}")
+                #  logging.info(f"Cantidad de páginas: {pages}")
+                print(f"Cantidad de páginas: {pages}")
 
                 # En cada página se obtienen los datos requeridos
                 self.next_page(pages)
 
                 try:
                     self.store_data(data=self.all_data,
-                                    criteria=self.list_of_data[0])
+                                    criteria=self.list_of_data)
                 except Exception as error:
-                    logging.error(error)
+                    print(error)
+                    # logging.info(error)
 
                 time.sleep(1)
                 self.driver.close()
-                logging.info(f"Finaliza el proceso.")
+                #  logging.info(f"Finaliza el proceso.")
+                print(f"Finaliza el proceso.")
                 break
 
             except KeyboardInterrupt:
-                logging.info("Cerrando")
+                #  logging.info("Cerrando")
+                print("Cerrando")
                 self.store_data(data=self.all_data,
-                                criteria=self.list_of_data[0])
+                                criteria=self.list_of_data)
                 exit()
 
             except Exception as error:
-                logging.error(f" {error}")
+                # logging.info(f" {error}")
+                print(f"Error: {error}")
                 self.retries += 1
-                logging.error(f'Reintentando... Intento #{self.retries}')
+                # logging.info(f'Reintentando... Intento #{self.retries}')
+                print(f'Reintentando... Intento #{self.retries}')
                 time.sleep(self.wait_time)
                 if self.retries == 3:
                     try:
                         if self.all_data:
                             self.store_data(data=self.all_data,
-                                            criteria=self.list_of_data[0])
+                                            criteria=self.list_of_data)
+                            self.all_data = []
                     except Exception as error:
-                        logging.error(error)
-                    logging.error('Maximo de intentos configurados.')
-
-                self.all_data = []
+                        print(error)
+                        # logging.info(error)
+                    print('Maximo de intentos configurados.')

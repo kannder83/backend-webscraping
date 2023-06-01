@@ -14,8 +14,10 @@ router: APIRouter = APIRouter(
 )
 
 
-def write_notification(value: str):
-    judicatura = Judicatura(values=value)
+def write_notification(value: str) -> None:
+    """
+    """
+    judicatura = Judicatura(value=value)
     judicatura.search()
 
 
@@ -79,8 +81,9 @@ async def post_send_notification(
     """
     """
     try:
-        background_tasks.add_task(
-            write_notification, data.document)
+        for value in data.documents:
+            background_tasks.add_task(
+                write_notification, value)
         return {"msg": "Se recibe la solicitud correctamente."}
     except Exception as error:
         logging.error(error)

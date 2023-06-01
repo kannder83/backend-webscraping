@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class SearchRequest(BaseModel):
-    document: str
+    documents: list
 
 
 class SearchResponse(BaseModel):
